@@ -2,53 +2,56 @@
   <div id="app">
     <div class="edit">
       <Editor
-        :hashList="hashList"
+        :hashlist="hashlist"
+        placeholder="Vui lòng nhập nội dung"
         @getContent="handleUpdateContent"
         @getCurrentTheme="handleUpdateTheme"
       />
     </div>
     <div class="content">{{ content }}</div>
-    <div class="theme">theme: {{theme}}</div>
+    <div class="theme">theme: {{ theme }}</div>
   </div>
 </template>
 
 <script>
-import Editor from "@/components/Editor";
+import Editor from "@/components/Editor2";
 
 export default {
   name: "App",
   components: {
-    Editor
+    Editor,
   },
   data() {
     return {
       content: "",
       theme: "",
-      hashList: [
+      hashlist: [
         {
           id: 1,
-          value: "apple"
+          value: "apple",
         },
         {
           id: 2,
-          value: "orange"
+          value: "orange",
         },
         {
           id: 3,
-          value: "mango"
-        }
-      ]
+          value: "mango",
+        },
+      ],
     };
   },
   methods: {
     handleUpdateContent(content) {
+      console.warn("handleUpdateContent", content);
+
       this.content = content;
     },
     handleUpdateTheme(theme) {
       this.theme = theme;
       console.log("handleUpdateTheme", theme);
-    }
-  }
+    },
+  },
 };
 </script>
 
