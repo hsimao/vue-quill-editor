@@ -43,7 +43,7 @@ export default {
   },
   methods: {
     handleUpdateContent(content) {
-      console.warn("handleUpdateContent", content);
+      // console.warn("handleUpdateContent", content);
 
       this.content = content;
     },

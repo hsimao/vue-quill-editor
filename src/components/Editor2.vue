@@ -22,7 +22,7 @@
       </select>
 
       <!-- 圖片上傳 -->
-      <button class="ql-image" />
+      <button class="ql-image" :class="{ disable: imgDisable }" />
     </div>
 
     <!-- 編輯區 -->
@@ -61,12 +61,23 @@ export default {
       type: Number,
       default: 10,
     },
+    // 限制圖片上傳張數
+    imgLimit: {
+      type: Object | false,
+      default: () => {
+        return {
+          count: 3,
+          width: 1000,
+          height: 1000,
+          size: 1024 * 1024 * 10, // 10mb
+        };
+      },
+    },
   },
   data() {
     return {
-      cstomTheme: null,
       content: "",
-      currentTheme: "",
+      imgDisable: false,
       editorOption: {
         placeholder: this.placeholder,
         modules: {
@@ -82,49 +93,115 @@ export default {
   methods: {
     onEditorReady() {},
     getWrapCount(quill) {
-      return quill.getContents().ops[0].insert.split("\n").length - 1 || 0;
+      const wrapCount = quill.getContents().ops.reduce((acc, it) => {
+        if (typeof it.insert === "string") {
+          acc += it.insert.split("\n").length - 1 || 0;
+        }
+
+        return acc;
+      }, 0);
+      return wrapCount;
+    },
+    getRealTextLength(quill) {
+      return (
+        quill.getLength() - this.getImgCount(quill) - this.getWrapCount(quill)
+      );
     },
     getDeleteStartLength(quill) {
-      return this.getWrapCount(quill) > 1
-        ? this.contentLimit + this.getWrapCount(quill) - 1
+      this.getWrapCount(quill) > 1
+        ? this.contentLimit +
+          this.getWrapCount(quill) +
+          this.getImgCount(quill) -
+          1
         : this.contentLimit;
     },
+    getImgCount(quill) {
+      return quill.getContents().ops.reduce((acc, it) => {
+        if (typeof it.insert === "object" && it.insert.image) {
+          acc++;
+        }
+        return acc;
+      }, 0);
+    },
+    checkImgDisable(quill) {
+      if (this.imgLimit && this.imgLimit.count) {
+        if (this.getImgCount(quill) === this.imgLimit.count) {
+          this.imgDisable = true;
+        } else {
+          this.imgDisable = false;
+        }
+      }
+    },
+    getImageWidthAndHeight(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = window.URL.createObjectURL(file);
+        img.onload = () => {
+          resolve({ width: img.width, height: img.height });
+        };
+      });
+    },
     isExceed(quill) {
-      const realTextLength = quill.getLength() - this.getWrapCount(quill);
-      return realTextLength < this.contentLimit;
+      return this.getRealTextLength(quill) > this.contentLimit;
     },
     onEditorChange({ quill, html, text }) {
-      const realContentLength = quill.getLength() - this.getWrapCount(quill);
       if (this.isExceed(quill)) {
+        quill.deleteText(this.getDeleteStartLength(quill), quill.getLength());
+      } else {
         this.$emit("getContent", html);
-      } else {
-        quill.deleteText(this.getDeleteStartLength(quill), realContentLength);
       }
+      this.checkImgDisable(quill);
     },
-    handleMention(searchTerm, renderList, mentionChar) {
-      if (searchTerm.length === 0) {
-        renderList(this.hashlist, searchTerm);
-      } else {
-        const matches = [];
-        for (let i = 0; i < this.hashlist.length; i++)
-          if (
-            ~this.hashlist[i].value
-              .toLowerCase()
-              .indexOf(searchTerm.toLowerCase())
-          )
-            matches.push(this.hashlist[i]);
-        renderList(matches, searchTerm);
+    async checkImageLimit(file) {
+      const result = {
+        width: true,
+        height: true,
+        size: true,
+        pass: true,
+      };
+
+      if (!this.imgLimit) return result;
+
+      const { width, height } = await this.getImageWidthAndHeight(file);
+
+      if (file.size > this.imgLimit.size) {
+        result.size = false;
+        result.pass = false;
       }
+      if (width > this.imgLimit.width) {
+        result.width = false;
+        result.pass = false;
+      }
+      if (height > this.imgLimit.height) {
+        result.height = false;
+        result.pass = false;
+      }
+
+      return result;
     },
-    handleImageUpload(file) {
-      // api handle
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve(
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/JavaScript-logo.png/480px-JavaScript-logo.png"
-          );
-        }, 3500);
-      });
+    async handleImageUpload(file) {
+      const { pass, width, height, size } = await this.checkImageLimit(file);
+
+      if (pass) {
+        // api handle
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/JavaScript-logo.png/480px-JavaScript-logo.png"
+            );
+          }, 3500);
+        });
+      } else if (!size) {
+        alert("圖片檔案大小超出上限");
+        return new Promise((resolve, reject) => {
+          reject();
+        });
+      } else if (!width || !height) {
+        alert("圖片寬高超出上限");
+        return new Promise((resolve, reject) => {
+          reject();
+        });
+      }
     },
   },
 };
@@ -142,22 +219,10 @@ export default {
     }
   }
 
-  #custom-theme {
-    margin-left: 10px;
-    width: 24px;
-    border: solid 3px black;
-    background-color: gray;
-
-    .ql-picker-label {
-      opacity: 0;
-    }
-
-    &.ql-expanded {
-      .ql-picker-options {
-        display: flex;
-        width: auto;
-      }
-    }
+  .ql-image.disable {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.7;
   }
 }
 </style>
