@@ -12,7 +12,8 @@
     "quill-image-uploader": "^1.2.2",
     "quill-mention": "^3.0.3",
     "vue": "^2.6.11",
-    "vue-quill-editor": "^3.0.6"
+    "vue-quill-editor": "^3.0.6",
+    "vue-router": "^3.5.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
