@@ -108,11 +108,11 @@ export default {
       );
     },
     getDeleteStartLength(quill) {
-      this.getWrapCount(quill) > 1
+      return this.getWrapCount(quill) > 1
         ? this.contentLimit +
-          this.getWrapCount(quill) +
-          this.getImgCount(quill) -
-          1
+            this.getWrapCount(quill) +
+            this.getImgCount(quill) -
+            1
         : this.contentLimit;
     },
     getImgCount(quill) {
