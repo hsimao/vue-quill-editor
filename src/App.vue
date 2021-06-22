@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <InputCount />
     <div class="edit">
       <Editor
         :hashlist="hashlist"
@@ -15,11 +16,13 @@
 
 <script>
 import Editor from "@/components/Editor2";
+import InputCount from "@/components/InputCount";
 
 export default {
   name: "App",
   components: {
     Editor,
+    InputCount,
   },
   data() {
     return {
