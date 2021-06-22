@@ -1,5 +1,5 @@
 <template>
-  <div class="edit">
+  <div class="edit-container">
     <select>
       <option selected="selected">請選擇主題分類</option>
       <option :value="topic.id" v-for="topic in topicList" :key="topic.id">
@@ -74,8 +74,7 @@ export default {
 </script>
 
 <style lang="scss">
-#app {
-  width: 100%;
-  height: 100vh;
+.edit-container {
+  padding: 50px;
 }
 </style>
